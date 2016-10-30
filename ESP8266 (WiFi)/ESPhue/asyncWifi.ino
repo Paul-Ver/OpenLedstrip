@@ -20,109 +20,6 @@ void asyncConnect(){
 int prevState = 6;
 int state = -1;
 
-void asyncHandle(){
-  state = WiFi.status();
-  delay(0);
-
-  handleStateTransition();
-  
-  // Check if a client has connected
-  WiFiClient client = server.available();
-  if (!client) {
-    return;
-  }
-  // Wait until the client sends some data
-  while(!client.available()){
-    delay(0);
-  }
-  
-  // Read the first line of the request
-  String req = client.readStringUntil('\r');
-  Serial.println(req);
-
-  int idx = req.indexOf("?");
-  int nidx = 0;
-  if(idx != -1){
-    Serial.println("GET RECEIVED");
-    idx = req.indexOf("H=");
-    nidx = req.indexOf("&",idx+1);
-    Serial.print("H: ");
-    h = req.substring(idx+2,nidx).toInt();
-    Serial.println(h);
-    
-    /*
-    idx = req.indexOf("S=");
-    nidx = req.indexOf("&",idx+1);
-    s = req.substring(idx+2,nidx).toInt();
-    Serial.print("S: ");
-    Serial.println(s);
-    */
-    
-    idx = req.indexOf("L=");
-    nidx = req.indexOf(" ",idx+1);
-    l = req.substring(idx+2,nidx).toInt();
-    Serial.print("L: ");
-    Serial.println(l);
-
-
-    //TODO HSL TO RGB
-   r =colVal(h*2.84+341) /80*l;
-   g =colVal(h*2.84) /80*l;
-   b =colVal(h*2.84+682) /80*l;
-   Serial.print("RGB(");
-   Serial.print(r);
-   Serial.print(",");
-   Serial.print(g);
-   Serial.print(",");
-   Serial.print(b);
-   Serial.println(")");
-    analogWrite(pinR,r);
-    analogWrite(pinG,g);
-    analogWrite(pinB,b);
-    Serial.println("OK");
-  }
-  /*
-  // Set GPIO2 according to the request
-  digitalWrite(2, pins[0]);
-  
-  String r = "";
-  r += F("<html><body>");
-  for(unsigned char i = 0; i<amountOfPins; i++){
-    delay(0);
-    r += F("<button onclick=\"window.location.href='");
-    //Message
-    r += "(1,";//Type
-    r += i;//ID
-    r += ",";
-    r += pins[i];//command
-    r += ")";
-    r += F("'\">");
-    r += pins[i]?"Aan":"Uit";//Aan/uit
-    r += F("</button></br></br>");
-  }
-  r += F("</body></html>");
-  client.print(r);
-  */
-
-  //Just always send a HTTP 200 OK, with the HTML page (doesn't matter if it's a GET or a POST.
-  String r;
-  r+= (
-        F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n<!DOCTYPE html><form method=\"get\" action=\"\">Color <input type=\"range\" id=\"h\" name=\"H\" value=\"")
-      );
-  r+= (String(h));//h current value
-  r+= (F("\" min=\"0\" max=\"360\" onmouseup=\"this.form.submit()\" oninput=\"c()\"><br>")); //Sat <input type=\"range\" id=\"s\" name=\"S\" value=\""));
-  //r+= (String(s));//s curent value
-  //r+= (F("\" min=\"0\" max=\"100\" oninput=\"c()\"><br>
-  r+= (F("Light <input type=\"range\" id=\"l\" name=\"L\" value=\""));
-  r+= (String(l));//l current value
-  r+= (F("\" min=\"0\" max=\"80\" onmouseup=\"this.form.submit()\" oninput=\"c()\"><br><div id=\"color\" style=\"width:150px;height:100px;\"></div><br><input type=\"submit\" value=\"Send color\"></form><script>c();function c(){document.getElementById(\'color\').style.background = \"hsl(\"+document.getElementById(\'h\').value+\",100%,\"+document.getElementById(\'l\').value+\"%)\";}</script></html>") );
-  client.print(r);
-  delay(200);
-  // close the connection:
-  client.stop();
-}
-
-
 void handleStateTransition(){
   if(prevState != state){//                     STATE TRANSITIONS ONLY!                       //
     Serial.print(F("WiFi state changed: "));
@@ -160,5 +57,105 @@ void handleStateTransition(){
     }
     prevState = state;
   }
+}
+
+void asyncHandle(){
+  state = WiFi.status();
+  delay(0);
+
+  handleStateTransition();
+  
+  // Check if a client has connected
+  WiFiClient client = server.available();
+  if (!client) {
+    return;
+  }
+
+  // Wait until the client sends some data
+  while(!client.available()){
+    delay(0);
+  }
+  
+  // Read the first line of the request
+  String req = client.readStringUntil('\r');
+  Serial.println(req);
+
+  //Only send HTTP response, if it's an HTTP message.
+  static boolean isHttp = false;
+  if(req.indexOf("/ ") != -1 || req.indexOf("/?") != -1){
+    isHttp = true;
+    Serial.println("GET received");
+  }else{
+    isHttp = false;
+  }
+  
+  int idx = req.indexOf("H=");
+  int nidx = req.indexOf("&",idx+1);
+  if(idx != -1){
+    if(nidx == -1){
+      nidx = req.indexOf(" ",idx+1);
+    }
+    if(nidx != -1){
+      Serial.print("H: ");
+      h = req.substring(idx+2,nidx).toInt();
+      Serial.println(h);
+    }
+  }
+  
+  /*
+  TODO MAYBE add saturation, not sure if it's of any help on RGB LEDstrips, decreasing saturation will only make the colors less vivid, you could also just decrease brightness.
+  idx = req.indexOf("S=");
+  nidx = req.indexOf("&",idx+1);
+  s = req.substring(idx+2,nidx).toInt();
+  Serial.print("S: ");
+  Serial.println(s);
+  */
+
+  idx = req.indexOf("L=");
+  nidx = req.indexOf("&",idx+1);
+  if(idx != -1){
+    if(nidx == -1){
+      nidx = req.indexOf(" ",idx+1);
+    }
+    if(nidx != -1){
+      Serial.print("L: ");
+      l = req.substring(idx+2,nidx).toInt();
+      Serial.println(l);
+    }
+  }
+
+  //TODO improve HSL TO RGB
+  r =colVal(h*2.84+341) /80*l;
+  g =colVal(h*2.84) /80*l;
+  b =colVal(h*2.84+682) /80*l;
+  Serial.print("RGB(");
+  Serial.print(r);
+  Serial.print(",");
+  Serial.print(g);
+  Serial.print(",");
+  Serial.print(b);
+  Serial.println(")");
+  analogWrite(pinR,r);
+  analogWrite(pinG,g);
+  analogWrite(pinB,b);
+  Serial.println("OK");
+
+  if(isHttp){
+  //Just always send a HTTP 200 OK, with the HTML page (doesn't matter if it's a GET or a POST.
+  String r;
+  r+= (F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n<!DOCTYPE html><form method=\"get\" action=\"\">Color <input type=\"range\" id=\"h\" name=\"H\" value=\""));
+  r+= (String(h));//h current value
+  r+= (F("\" min=\"0\" max=\"360\" onmouseup=\"this.form.submit()\" oninput=\"c()\"><br>")); //Sat <input type=\"range\" id=\"s\" name=\"S\" value=\""));
+  //r+= (String(s));//s curent value
+  //r+= (F("\" min=\"0\" max=\"100\" oninput=\"c()\"><br>
+  r+= (F("Light <input type=\"range\" id=\"l\" name=\"L\" value=\""));
+  r+= (String(l));//l current value
+  r+= (F("\" min=\"0\" max=\"80\" onmouseup=\"this.form.submit()\" oninput=\"c()\"><br><div id=\"color\" style=\"width:150px;height:100px;\"></div><br><input type=\"submit\" value=\"Send color\"></form><script>c();function c(){document.getElementById(\'color\').style.background = \"hsl(\"+document.getElementById(\'h\').value+\",100%,\"+document.getElementById(\'l\').value+\"%)\";}</script></html>") );
+    client.print(r);
+  }else{
+    client.print(F("OK\r"));
+  }
+  client.flush();//Send the last bytes before closing.
+  client.stop();//Close the connection.
 }
 

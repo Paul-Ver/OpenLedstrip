@@ -1,4 +1,7 @@
 #include <ESP8266WiFi.h>
+//TODO disco mode/fade mode/rainbow mode
+//TODO HTTP POST
+//TODO Make the client connection (byte receiving) truly non-blocking. (Can now block for a whole second)
 
 //////////////////////
 // WiFi Definitions //
