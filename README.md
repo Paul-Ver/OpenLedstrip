@@ -10,8 +10,10 @@ Currently includes:
 - Nano + Nano Ethernet software (Compact ethernet version)
 - ESP8266 (WiFi version)
 - HTTP message handling
+- TCP message handling
 
 TODO:
-- TCP messages (for faster/easier changing)
 - Messages for "disco mode" or preset (fade/colorwheel) animations
+- Make the message handling more async/non-blocking
 - Support for digital LED strips
+- Order/check the hardware schematics
