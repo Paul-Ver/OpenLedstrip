@@ -16,7 +16,8 @@ TODO:
 - Animations
   - Fade (in/out, fade colorwheel, random colors) (fadespeed,delta)
   - Flicker (on/off, colorwheel, random colors) (ontime,offtime,delta)
-- Bring Nano Ethernet version up to date.
+- Bring Nano Ethernet version up to date. (Or delete it)
+- something funky, UDP broadcast synchronisation of led strips!?
 - Make the message handling more async/non-blocking
 - Order/check the hardware schematics
 - Add support for digital led strips?
