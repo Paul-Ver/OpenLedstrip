@@ -13,7 +13,11 @@ Currently includes:
 - TCP message handling
 
 TODO:
-- Messages for "disco mode" or preset (fade/colorwheel) animations
+- Animations
+  - Fade (in/out, fade colorwheel, random colors) (fadespeed,delta)
+  - Flicker (on/off, colorwheel, random colors) (ontime,offtime,delta)
+- Bring Nano Ethernet version up to date.
 - Make the message handling more async/non-blocking
-- Support for digital LED strips
 - Order/check the hardware schematics
+- Add support for digital led strips?
+(Though I don't know what specific things to implement)
